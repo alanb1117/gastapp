@@ -141,6 +141,14 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
 .pass-wrap .inp{padding-right:48px}
 .eye-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;background:transparent;color:var(--text2);font-size:18px;cursor:pointer}
 .small-link{font-size:13px;color:var(--blue);cursor:pointer;text-align:right;margin-top:-6px;margin-bottom:12px}
+
+.badge-ok{font-size:11px;padding:2px 8px;border-radius:20px;background:#052e16;color:#22c55e;font-weight:600}
+.badge-warn{font-size:11px;padding:2px 8px;border-radius:20px;background:#451a03;color:#f59e0b;font-weight:600}
+.badge-err{font-size:11px;padding:2px 8px;border-radius:20px;background:#450a0a;color:#f87171;font-weight:600}
+.aprov-btns{display:flex;gap:8px;padding:8px 12px;border-top:1px solid var(--border)}
+.btn-aprobar{flex:1;height:36px;border-radius:8px;background:#052e16;color:#22c55e;border:1px solid #166534;font-size:13px;font-weight:700;cursor:pointer}
+.btn-rechazar{flex:1;height:36px;border-radius:8px;background:#450a0a;color:#f87171;border:1px solid #7f1d1d;font-size:13px;font-weight:700;cursor:pointer}
+.btn-aprobar:active{opacity:.8}.btn-rechazar:active{opacity:.8}
 input[type=file]{display:none}
 </style>
 </head>
@@ -351,7 +359,6 @@ function parseMontoInput(v){
   if(!v && v!==0) return 0;
   const s = String(v).trim().replace(/[^0-9.,-]/g,'');
   if(!s) return 0;
-  // Si tiene punto Y coma, el último es el decimal
   const lastComma = s.lastIndexOf(',');
   const lastDot = s.lastIndexOf('.');
   if(lastComma > lastDot) return parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
@@ -653,6 +660,10 @@ async function guardarFactura(){
       imageUrl:imageUrl||null,
       imageName: pendingFile ? (pendingFile.name || '') : '',
       imageType: pendingFile ? (pendingFile.type || '') : '',
+      status:'pendiente',
+      motivoRechazo:null,
+      aprobadoPor:null,
+      aprobadoAt:null,
       uploadedAt:now.toLocaleDateString('es-AR')+' '+now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}),
       createdAt:TS()
     });
@@ -663,7 +674,7 @@ async function guardarFactura(){
 }
 
 // ─── CARD HTML ───────────────────────────────
-function cardHTML(inv, canDel=false){
+function cardHTML(inv, canDel=false, accionesHTML=''){
   const isPdf = ((inv.imageType || inv.fileType || '').includes('pdf')) || /\.pdf(\?|$)/i.test((inv.imageName || inv.imageUrl || ''));
   const imgHTML = inv.imageUrl
     ? (isPdf
@@ -671,6 +682,12 @@ function cardHTML(inv, canDel=false){
       : `<img src="${inv.imageUrl}" alt="factura" loading="lazy" style="width:100%;height:100%;object-fit:cover">`)
     : `<span class="inv-img-placeholder">🧾</span>`;
   const clickAction = isPdf ? `window.open('${inv.imageUrl||''}','_blank')` : `openImg('${inv.imageUrl||''}')`;
+  const estado = inv.status || 'pendiente';
+  const statusBadge = estado === 'aprobada'
+    ? `<span class="badge-ok">✅ Aprobada</span>`
+    : estado === 'rechazada'
+    ? `<span class="badge-err">❌ Rechazada${inv.motivoRechazo ? ': '+inv.motivoRechazo : ''}</span>`
+    : `<span class="badge-warn">⏳ Pendiente</span>`;
   return `<div class="inv-card">
     <div class="inv-card-top">
       <div class="inv-img" onclick="${clickAction}">${imgHTML}</div>
@@ -681,8 +698,10 @@ function cardHTML(inv, canDel=false){
           <span class="inv-tag">${inv.metodo_pago||'—'}</span>
         </div>
         <div class="inv-detail">📅 ${inv.fecha_factura||'—'} · N° ${inv.numero_factura||'—'}</div>
+        <div class="inv-detail" style="margin-top:6px">${statusBadge}</div>
       </div>
     </div>
+    ${accionesHTML||''}
     <div class="inv-footer">
       <span class="inv-meta-small">Subido: ${inv.uploadedAt||''}</span>
       ${canDel?`<button class="del-btn" onclick="eliminar('${inv.id}','${inv.imageUrl||''}')">🗑 Eliminar</button>`:''}
@@ -699,6 +718,38 @@ async function eliminar(id, url){
     toast('Eliminada','ok');
     if(PERFIL.role==='supervisor') renderSupervisor(); else renderTecnico();
   }catch{ toast('Error al eliminar','err'); }finally{ loader(false); }
+}
+
+async function aprobarFactura(id){
+  if(!confirm('¿Aprobar esta factura?')) return;
+  loader(true,'Aprobando...');
+  try{
+    await db.collection('invoices').doc(id).update({
+      status:'aprobada',
+      aprobadoPor: PERFIL.name,
+      aprobadoAt: TS()
+    });
+    toast('Factura aprobada ✓','ok');
+    renderSupervisor();
+  }catch(e){ toast('Error: '+e.message,'err'); }
+  finally{ loader(false); }
+}
+
+async function rechazarFactura(id){
+  const motivo = prompt('Motivo del rechazo (opcional):');
+  if(motivo === null) return;
+  loader(true,'Rechazando...');
+  try{
+    await db.collection('invoices').doc(id).update({
+      status:'rechazada',
+      motivoRechazo: motivo || 'Sin motivo',
+      aprobadoPor: PERFIL.name,
+      aprobadoAt: TS()
+    });
+    toast('Factura rechazada','warn');
+    renderSupervisor();
+  }catch(e){ toast('Error: '+e.message,'err'); }
+  finally{ loader(false); }
 }
 
 // ─── RENDER TÉCNICO ──────────────────────────
@@ -750,7 +801,15 @@ async function renderSupervisor(){
     } else {
       Object.values(tecMap).forEach(v=>{
         const tot=v.invs.reduce((s,i)=>s+(i.monto||0),0);
-        html+=`<div class="team-section"><div class="team-header"><span class="team-name">👤 ${v.name}</span><span class="team-total">${fmtMonto(tot)}</span></div><div class="team-body">${v.invs.map(i=>cardHTML(i,false)).join('')}</div></div>`;
+        const cards = v.invs.map(inv=>{
+          const accionesHTML = (inv.status || 'pendiente') === 'pendiente' ? `
+  <div class="aprov-btns">
+    <button class="btn-aprobar" onclick="aprobarFactura('${inv.id}')">✓ Aprobar</button>
+    <button class="btn-rechazar" onclick="rechazarFactura('${inv.id}')">✗ Rechazar</button>
+  </div>` : '';
+          return cardHTML(inv,false,accionesHTML);
+        }).join('');
+        html+=`<div class="team-section"><div class="team-header"><span class="team-name">👤 ${v.name}</span><span class="team-total">${fmtMonto(tot)}</span></div><div class="team-body">${cards}</div></div>`;
       });
     }
     $('sup-content').innerHTML=html;
@@ -767,8 +826,12 @@ async function renderAdmin(){
     const mk=mkey(admAnio,admMes);
     $('adm-month-sub').textContent=MESES[admMes]+' '+admAnio;
     $('adm-month-label').textContent=MESES[admMes]+' '+admAnio;
-    const snaps=await db.collection('invoices').where('monthKey','==',mk).get();
-    const all=[]; snaps.forEach(s=>all.push(s.data()));
+    const snaps=await db.collection('invoices')
+      .where('monthKey','==',mk)
+      .where('status','==','aprobada')
+      .orderBy('createdAt','desc')
+      .get();
+    const all=[] snaps.forEach(s=>all.push(s.data()));
     all.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
     const total=all.reduce((s,i)=>s+(i.monto||0),0);
     $('adm-total').textContent=fmtMonto(total);
@@ -809,6 +872,9 @@ function invoiceRows(invs){
     Factura: i.numero_factura || '',
     Monto: Number(i.monto || 0),
     Metodo: i.metodo_pago || '',
+    Estado: i.status || 'pendiente',
+    Motivo_Rechazo: i.motivoRechazo || '',
+    Aprobado_Por: i.aprobadoPor || '',
     Mes: i.monthKey || '',
     Factura_Imagen: i.imageUrl ? 'Abrir factura' : '',
     Link_Imagen: i.imageUrl || '',
@@ -850,7 +916,11 @@ async function exportarMes(scope){
     let query = db.collection('invoices').where('monthKey','==',mk);
     let snaps;
     if(scope==='admin'){
-      snaps = await query.get();
+      snaps = await db.collection('invoices')
+        .where('monthKey','==',mk)
+        .where('status','==','aprobada')
+        .orderBy('createdAt','desc')
+        .get();
     }else{
       const [propias, equipo] = await Promise.all([
         db.collection('invoices').where('uid','==',ME.uid).where('monthKey','==',mk).get(),
