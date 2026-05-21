@@ -348,15 +348,14 @@ const mkey = (a,m) => `${a}-${String(m+1).padStart(2,'0')}`;
 const nowKey = () => { const n=new Date(); return mkey(n.getFullYear(),n.getMonth()); };
 const fmtMonto = n => (Number(n||0)).toLocaleString('es-AR',{style:'currency',currency:'ARS',minimumFractionDigits:2,maximumFractionDigits:2});
 function parseMontoInput(v){
-  let s=String(v||'').trim().replace(/[^0-9,.-]/g,'');
+  if(!v && v!==0) return 0;
+  const s = String(v).trim().replace(/[^0-9.,-]/g,'');
   if(!s) return 0;
-  const lastComma=s.lastIndexOf(','), lastDot=s.lastIndexOf('.');
-  if(lastComma>-1 && lastDot>-1){
-    if(lastDot>lastComma) return Number(s.replace(/,/g,''))||0;
-    return Number(s.replace(/\./g,'').replace(',', '.'))||0;
-  }
-  if(lastComma>-1) return Number(s.replace(/\./g,'').replace(',', '.'))||0;
-  return Number(s.replace(/,/g,''))||0;
+  // Si tiene punto Y coma, el último es el decimal
+  const lastComma = s.lastIndexOf(',');
+  const lastDot = s.lastIndexOf('.');
+  if(lastComma > lastDot) return parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
+  return parseFloat(s.replace(/,/g,'')) || 0;
 }
 
 function screen(id){
@@ -591,7 +590,7 @@ $('file-input').onchange=async e=>{
       $('pm-proveedor').value=r.proveedor||'';
       $('pm-fecha').value=r.fecha_factura||'';
       $('pm-numero').value=r.numero_factura||'';
-      $('pm-monto').value=(r.monto || r.monto===0) ? Number(r.monto).toFixed(2) : '';
+      $('pm-monto').value = r.monto ? String(Number(r.monto)) : '';
       $('modal-scan-msg').textContent='✅ Datos detectados con Gemini. Revisá y confirmá.';
     }catch(err){
       console.warn('Gemini falló:', err);
