@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a56db">
+<title>GastApp</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0b1220;--surface:#111827;--border:#243044;
+  --text:#f9fafb;--text2:#cbd5e1;--text3:#94a3b8;
+  --blue:#3b82f6;--blue-light:#172554;
+  --green:#22c55e;--green-bg:#052e16;
+  --red:#f87171;--red-bg:#450a0a;
+  --yellow:#f59e0b;--yellow-bg:#451a03;
+  --r:14px;--rs:10px;
+}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);overscroll-behavior:none;font-size:15px;color-scheme:dark}
+/* SCREENS */
+.screen{display:none;flex-direction:column;min-height:100dvh;max-width:480px;margin:0 auto}
+.screen.active{display:flex}
+/* AUTH */
+.auth-page{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px;background:var(--bg)}
+.logo{font-size:32px;font-weight:800;color:var(--blue);letter-spacing:-1px;margin-bottom:6px}
+.logo-sub{font-size:14px;color:var(--text2);margin-bottom:32px}
+.card{background:var(--surface);border-radius:var(--r);padding:24px 20px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.35);border:1px solid var(--border)}
+.card h2{font-size:20px;font-weight:600;margin-bottom:18px}
+.lbl{font-size:13px;color:var(--text2);margin-bottom:5px;display:block}
+.inp{width:100%;height:46px;border-radius:var(--rs);border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:15px;padding:0 14px;outline:none;-webkit-appearance:none;appearance:none}
+.inp:focus{border-color:var(--blue)}
+.sel{width:100%;height:46px;border-radius:var(--rs);border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:15px;padding:0 14px;outline:none;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23cbd5e1' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.sel:focus{border-color:var(--blue)}
+.fld{margin-bottom:14px}
+.btn{width:100%;height:48px;border-radius:var(--rs);border:none;font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
+.btn:active{opacity:.8}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-ghost{background:transparent;color:var(--blue);font-size:14px;height:36px}
+.link-row{text-align:center;margin-top:10px;font-size:14px;color:var(--text2)}
+.link-row a{color:var(--blue);cursor:pointer;font-weight:500}
+/* TOPBAR */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-title{font-size:17px;font-weight:600}
+.topbar-sub{font-size:12px;color:var(--text2);margin-top:1px}
+.topbar-actions{display:flex;gap:8px;align-items:center}
+.icon-btn{width:38px;height:38px;border-radius:var(--rs);background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:19px;color:var(--text2)}
+.icon-btn:active{background:#e5e7eb}
+/* CONTENT */
+.content{flex:1;padding:16px;padding-bottom:90px;overflow-y:auto}
+/* MONTH NAV */
+.month-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.month-txt{flex:1;font-size:16px;font-weight:600}
+.month-arrow{width:34px;height:34px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:var(--text2)}
+.month-arrow:active{background:#e5e7eb}
+/* STATS */
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat-box{background:var(--surface);border-radius:var(--r);padding:14px;border:1px solid var(--border)}
+.stat-box .lbl2{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:4px}
+.stat-box .val{font-size:24px;font-weight:700;color:var(--text)}
+.stat-box .val.blue{color:var(--blue)}
+/* SECTION TITLE */
+.sec-title{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+/* INVOICE CARD */
+.inv-card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);margin-bottom:10px;overflow:hidden}
+.inv-card-top{display:flex;align-items:stretch;gap:0}
+.inv-img{width:72px;min-height:72px;background:var(--bg);flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;border-right:1px solid var(--border);overflow:hidden}
+.inv-img img{width:100%;height:100%;object-fit:cover}
+.inv-img-placeholder{font-size:28px;color:var(--text3)}
+.inv-info{flex:1;padding:12px 12px 10px;min-width:0}
+.inv-proveedor{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+.inv-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.inv-monto{font-size:16px;font-weight:700;color:var(--blue)}
+.inv-tag{font-size:11px;background:var(--blue-light);color:var(--blue);padding:2px 8px;border-radius:20px;font-weight:500}
+.inv-detail{font-size:12px;color:var(--text2);margin-top:2px}
+.inv-footer{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-top:1px solid var(--border);background:var(--bg)}
+.inv-meta-small{font-size:11px;color:var(--text3)}
+.del-btn{font-size:13px;color:var(--red);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:6px}
+.del-btn:active{background:var(--red-bg)}
+/* EMPTY */
+.empty-state{text-align:center;padding:48px 20px;color:var(--text3)}
+.empty-state .icon{font-size:48px;margin-bottom:12px}
+.empty-state p{font-size:15px}
+/* BOTTOM BAR */
+.bottombar{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--border);padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.upload-btn{width:100%;height:52px;border-radius:var(--r);background:var(--blue);color:#fff;border:none;font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px}
+.upload-btn:active{opacity:.85}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:20px 18px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));width:100%;max-width:480px;max-height:94dvh;overflow-y:auto}
+.modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:18px}
+.modal-btns{display:flex;gap:10px;margin-top:16px}
+.modal-btns button{flex:1;height:46px;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--bg);color:var(--text)}
+.modal-btns .confirm{background:var(--blue);color:#fff;border-color:var(--blue)}
+/* IMAGE VIEWER */
+.img-viewer{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.img-viewer.open{display:flex}
+.img-viewer img{max-width:100%;max-height:90dvh;border-radius:10px;object-fit:contain}
+.img-viewer-close{position:absolute;top:16px;right:16px;width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:20px;border:none}
+/* LOADER */
+.loader-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:none;align-items:center;justify-content:center}
+.loader-overlay.open{display:flex}
+.loader-box{background:var(--surface);border-radius:var(--r);padding:22px 32px;display:flex;align-items:center;gap:14px;font-size:15px;font-weight:500;box-shadow:0 8px 30px rgba(0,0,0,.15)}
+.spinner{width:22px;height:22px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:#020617;color:#fff;padding:11px 20px;border-radius:30px;font-size:14px;font-weight:500;opacity:0;transition:all .22s;pointer-events:none;z-index:400;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{background:#065f46;color:#d1fae5}
+.toast.warn{background:#92400e;color:#fef3c7}
+.toast.err{background:#991b1b;color:#fee2e2}
+/* TEAM SECTION */
+.team-section{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);margin-bottom:12px;overflow:hidden}
+.team-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;background:var(--bg)}
+.team-name{font-size:14px;font-weight:600}
+.team-total{font-size:13px;color:var(--blue);font-weight:600}
+.team-body{padding:10px}
+.team-body .inv-card{margin-bottom:8px}
+.team-body .inv-card:last-child{margin-bottom:0}
+/* ROLE BADGE */
+.role-badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600}
+.role-badge.sup{background:#ede9fe;color:#5b21b6}
+.role-badge.tec{background:var(--blue-light);color:var(--blue)}
+/* ADMIN USER SECTION */
+.adm-user{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);margin-bottom:10px;overflow:hidden}
+.adm-user-header{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;cursor:pointer}
+.adm-user-name{font-size:15px;font-weight:600;margin-right:6px}
+.adm-user-total{font-size:14px;color:var(--blue);font-weight:700}
+.adm-user-body{padding:10px;border-top:1px solid var(--border);background:var(--bg)}
+.adm-user-body .inv-card{margin-bottom:8px}
+.adm-user-body .inv-card:last-child{margin-bottom:0}
+.pass-wrap{position:relative}
+.pass-wrap .inp{padding-right:48px}
+.eye-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;background:transparent;color:var(--text2);font-size:18px;cursor:pointer}
+.small-link{font-size:13px;color:var(--blue);cursor:pointer;text-align:right;margin-top:-6px;margin-bottom:12px}
+input[type=file]{display:none}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div class="loader-overlay" id="loader">
+  <div class="loader-box"><div class="spinner"></div><span id="loader-msg">Procesando...</span></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- FILE INPUT -->
+<input type="file" id="file-input" accept="image/*,.pdf">
+
+<!-- IMAGE VIEWER -->
+<div class="img-viewer" id="img-viewer">
+  <button class="img-viewer-close" onclick="closeImg()">✕</button>
+  <img id="img-viewer-src" src="" alt="">
+</div>
+
+<!-- MODAL: DATOS FACTURA -->
+<div class="modal-overlay" id="invoice-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Datos de la factura</div>
+    <div class="modal-sub" id="modal-scan-msg">Completá los datos del comprobante</div>
+    <div class="fld"><label class="lbl">Proveedor / Emisor</label><input class="inp" id="pm-proveedor" type="text" placeholder="Ej: YPF, Sodimac..."></div>
+    <div class="fld"><label class="lbl">Fecha de la factura</label><input class="inp" id="pm-fecha" type="text" placeholder="DD/MM/AAAA" inputmode="numeric"></div>
+    <div class="fld"><label class="lbl">N° de factura</label><input class="inp" id="pm-numero" type="text" placeholder="Ej: 0001-00012345"></div>
+    <div class="fld"><label class="lbl">Monto ($)</label><input class="inp" id="pm-monto" type="number" inputmode="decimal" placeholder="0.00"></div>
+    <div class="fld"><label class="lbl">Método de pago</label><select class="sel" id="pm-metodo" onchange="onMetodoChange()"></select></div>
+    <div class="fld" id="pm-qr-row" style="display:none"><label class="lbl">¿Quién pagó con QR?</label><input class="inp" id="pm-qr-quien" type="text" placeholder="Nombre de quien pagó"></div>
+    <div class="modal-btns">
+      <button onclick="closeModal()">Cancelar</button>
+      <button class="confirm" onclick="guardarFactura()">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LOGIN ═══ -->
+<div class="screen active" id="screen-login">
+  <div class="auth-page">
+    <div class="logo">💰 GastApp</div>
+    <div class="logo-sub">Control de gastos del equipo</div>
+    <div class="card">
+      <h2>Ingresar</h2>
+      <div class="fld"><label class="lbl">Email</label><input class="inp" id="l-email" type="email" placeholder="nombre@empresa.com" autocomplete="email"></div>
+      <div class="fld"><label class="lbl">Contraseña</label><div class="pass-wrap"><input class="inp" id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"><button class="eye-btn" type="button" onclick="togglePass('l-pass', this)">👁</button></div></div>
+      <div class="small-link" id="forgot-pass">¿Olvidaste la contraseña?</div>
+      <button class="btn btn-primary" id="btn-login" style="margin-top:4px">Ingresar</button>
+    </div>
+    <div class="link-row">¿Primera vez? <a id="go-register">Crear cuenta</a></div>
+  </div>
+</div>
+
+<!-- ═══ REGISTRO ═══ -->
+<div class="screen" id="screen-register">
+  <div class="auth-page">
+    <div class="logo">💰 GastApp</div>
+    <div class="logo-sub">Nueva cuenta</div>
+    <div class="card">
+      <h2>Registrarse</h2>
+      <div class="fld"><label class="lbl">Nombre completo</label><input class="inp" id="r-nombre" type="text" placeholder="Tu nombre y apellido" autocomplete="name"></div>
+      <div class="fld"><label class="lbl">Email</label><input class="inp" id="r-email" type="email" placeholder="nombre@empresa.com" autocomplete="email"></div>
+      <div class="fld"><label class="lbl">Contraseña</label><div class="pass-wrap"><input class="inp" id="r-pass" type="password" placeholder="Mínimo 6 caracteres"><button class="eye-btn" type="button" onclick="togglePass('r-pass', this)">👁</button></div></div>
+      <div class="fld"><label class="lbl">Soy...</label>
+        <select class="sel" id="r-rol">
+          <option value="">— Seleccioná tu rol —</option>
+          <option value="tecnico">Técnico</option>
+          <option value="supervisor">Supervisor</option>
+        </select>
+      </div>
+      <div class="fld" id="r-sup-row" style="display:none"><label class="lbl">Mi supervisor</label>
+        <select class="sel" id="r-supervisor"><option value="">— Cargando... —</option></select>
+      </div>
+      <button class="btn btn-primary" id="btn-register" style="margin-top:4px">Crear cuenta</button>
+    </div>
+    <div class="link-row"><a id="go-login">← Ya tengo cuenta</a></div>
+  </div>
+</div>
+
+<!-- ═══ TÉCNICO ═══ -->
+<div class="screen" id="screen-tecnico">
+  <div class="topbar">
+    <div><div class="topbar-title" id="tec-nombre">—</div><div class="topbar-sub" id="tec-mes">—</div></div>
+    <div class="topbar-actions">
+      <div class="icon-btn" id="tec-logout" title="Salir">🚪</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="month-bar">
+      <div class="month-arrow" id="tec-prev">‹</div>
+      <div class="month-txt" id="tec-month-label">—</div>
+      <div class="month-arrow" id="tec-next">›</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-box"><div class="lbl2">Facturas</div><div class="val" id="tec-count">0</div></div>
+      <div class="stat-box"><div class="lbl2">Total</div><div class="val blue" id="tec-total">$0</div></div>
+    </div>
+    <div class="sec-title">Mis comprobantes</div>
+    <div id="tec-list"></div>
+  </div>
+  <div class="bottombar">
+    <button class="upload-btn" id="tec-upload">📎 Subir factura o foto</button>
+  </div>
+</div>
+
+<!-- ═══ SUPERVISOR ═══ -->
+<div class="screen" id="screen-supervisor">
+  <div class="topbar">
+    <div><div class="topbar-title" id="sup-nombre">—</div><div class="topbar-sub">Supervisor</div></div>
+    <div class="topbar-actions">
+      <div class="icon-btn" id="sup-export" title="Exportar Excel">📊</div>
+      <div class="icon-btn" id="sup-logout" title="Salir">🚪</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="month-bar">
+      <div class="month-arrow" id="sup-prev">‹</div>
+      <div class="month-txt" id="sup-month-label">—</div>
+      <div class="month-arrow" id="sup-next">›</div>
+    </div>
+    <div id="sup-content"></div>
+  </div>
+  <div class="bottombar">
+    <button class="upload-btn" id="sup-upload">📎 Subir mi factura</button>
+  </div>
+</div>
+
+<!-- ═══ ADMIN ═══ -->
+<div class="screen" id="screen-admin">
+  <div class="topbar">
+    <div><div class="topbar-title">Panel Admin</div><div class="topbar-sub" id="adm-month-sub">—</div></div>
+    <div class="topbar-actions">
+      <div class="icon-btn" id="adm-export" title="Exportar Excel">📊</div>
+      <div class="icon-btn" id="adm-logout" title="Salir">🚪</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="month-bar">
+      <div class="month-arrow" id="adm-prev">‹</div>
+      <div class="month-txt" id="adm-month-label">—</div>
+      <div class="month-arrow" id="adm-next">›</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-box"><div class="lbl2">Total mes</div><div class="val blue" id="adm-total">$0</div></div>
+      <div class="stat-box"><div class="lbl2">Facturas</div><div class="val" id="adm-count">0</div></div>
+    </div>
+    <div class="sec-title">Por empleado</div>
+    <div id="adm-list"></div>
+  </div>
+</div>
+
+<!-- Firebase compat SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script>
+// ─── CONFIG ───────────────────────────────────
+firebase.initializeApp({
+  apiKey:"AIzaSyC9i_qetQEt3rUQS63ypPDPsdetP2MBDdY",
+  authDomain:"gastapp-empresa.firebaseapp.com",
+  projectId:"gastapp-empresa",
+  storageBucket:"gastapp-empresa.firebasestorage.app",
+  messagingSenderId:"982541119412",
+  appId:"1:982541119412:web:a7d23bc6fcca4ce3554ce1"
+});
+const auth = firebase.auth();
+const db = firebase.firestore();
+const stor = firebase.storage();
+const SCAN_INVOICE_URL = 'https://us-central1-gastapp-empresa.cloudfunctions.net/scanInvoiceOCRV14';
+const TS = firebase.firestore.FieldValue.serverTimestamp;
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+// ─── STATE ───────────────────────────────────
+let ME = null, PERFIL = null;
+let PENDING_PROFILE_USER = null;
+let pendingFile = null, pendingB64 = null, pendingType = null;
+let tecMes = new Date().getMonth(), tecAnio = new Date().getFullYear();
+let supMes = new Date().getMonth(), supAnio = new Date().getFullYear();
+let admMes = new Date().getMonth(), admAnio = new Date().getFullYear();
+
+// ─── UTILS ───────────────────────────────────
+const $ = id => document.getElementById(id);
+const mkey = (a,m) => `${a}-${String(m+1).padStart(2,'0')}`;
+const nowKey = () => { const n=new Date(); return mkey(n.getFullYear(),n.getMonth()); };
+const fmtMonto = n => (Number(n||0)).toLocaleString('es-AR',{style:'currency',currency:'ARS',minimumFractionDigits:2,maximumFractionDigits:2});
+function parseMontoInput(v){
+  let s=String(v||'').trim().replace(/[^0-9,.-]/g,'');
+  if(!s) return 0;
+  const lastComma=s.lastIndexOf(','), lastDot=s.lastIndexOf('.');
+  if(lastComma>-1 && lastDot>-1){
+    if(lastDot>lastComma) return Number(s.replace(/,/g,''))||0;
+    return Number(s.replace(/\./g,'').replace(',', '.'))||0;
+  }
+  if(lastComma>-1) return Number(s.replace(/\./g,'').replace(',', '.'))||0;
+  return Number(s.replace(/,/g,''))||0;
+}
+
+function screen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=$('screen-'+id); if(el) el.classList.add('active');
+}
+function loader(show, msg='Procesando...'){
+  $('loader').classList.toggle('open',show);
+  $('loader-msg').textContent=msg;
+}
+function toast(msg,type=''){
+  const t=$('toast'); t.textContent=msg; t.className='toast show '+(type||'');
+  clearTimeout(window._tt); window._tt=setTimeout(()=>t.classList.remove('show'),2800);
+}
+function togglePass(id, btn){
+  const input=$(id);
+  if(!input) return;
+  const show=input.type==='password';
+  input.type=show?'text':'password';
+  if(btn) btn.textContent=show?'🙈':'👁';
+}
+function b64(file){
+  return new Promise((ok,err)=>{const r=new FileReader();r.onload=()=>ok(r.result.split(',')[1]);r.onerror=err;r.readAsDataURL(file);});
+}
+function dataUrlFromFile(file){
+  return new Promise((ok,err)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=err;r.readAsDataURL(file);});
+}
+function fileFromBlob(blob, name){
+  return new File([blob], name, {type: blob.type || 'image/jpeg'});
+}
+async function compressImageIfNeeded(file){
+  if(!file.type.startsWith('image/')) return file;
+  const dataUrl = await dataUrlFromFile(file);
+  const img = await new Promise((ok,err)=>{const im=new Image(); im.onload=()=>ok(im); im.onerror=err; im.src=dataUrl;});
+  const maxSide = 1600;
+  let {width, height} = img;
+  const scale = Math.min(1, maxSide / Math.max(width, height));
+  width = Math.round(width * scale);
+  height = Math.round(height * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = width; canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, width, height);
+  let quality = 0.78;
+  let blob = await new Promise(ok=>canvas.toBlob(ok, 'image/jpeg', quality));
+  while(blob && blob.size > 2 * 1024 * 1024 && quality > 0.35){
+    quality -= 0.12;
+    blob = await new Promise(ok=>canvas.toBlob(ok, 'image/jpeg', quality));
+  }
+  return fileFromBlob(blob, (file.name || 'factura').replace(/\.[^.]+$/, '') + '.jpg');
+}
+function validateInvoiceFile(file){
+  const allowed = ['image/jpeg','image/png','image/webp','application/pdf'];
+  if(!allowed.includes(file.type)) throw new Error('Formato no permitido. Usá JPG, PNG, WEBP o PDF.');
+  if(file.size > 2 * 1024 * 1024) throw new Error('El archivo supera 2MB. Sacá una foto más liviana o comprimila.');
+}
+
+
+// ─── IMAGE VIEWER ───────────────────────────
+function openImg(url){ if(!url) return; $('img-viewer-src').src=url; $('img-viewer').classList.add('open'); }
+function closeImg(){ $('img-viewer').classList.remove('open'); }
+
+// ─── AUTH ────────────────────────────────────
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    try{
+      const snap=await db.collection('users').doc(user.uid).get();
+      if(snap.exists){
+        ME=user; PERFIL=snap.data(); PENDING_PROFILE_USER=null;
+        goApp();
+      } else {
+        // Caso común: Auth creó el usuario, pero falló crear /users/{uid}.
+        // No lo echamos: dejamos completar el perfil y recuperamos la cuenta.
+        ME=user; PERFIL=null; PENDING_PROFILE_USER=user;
+        $('r-nombre').value = user.displayName || $('r-nombre').value || '';
+        $('r-email').value = user.email || $('r-email').value || '';
+        $('r-email').disabled = true;
+        $('r-pass').value = '';
+        $('r-pass').disabled = true;
+        $('btn-register').textContent = 'Completar perfil';
+        toast('Cuenta creada sin perfil. Elegí rol y completá el perfil.', 'warn');
+        screen('register');
+      }
+    }catch(e){ console.warn('Error cargando perfil:', e); toast('No pude cargar tu perfil. Revisá reglas o volvé a ingresar.', 'err'); screen('login'); }
+  } else {
+    ME=null; PERFIL=null; PENDING_PROFILE_USER=null;
+    $('r-email').disabled = false;
+    $('r-pass').disabled = false;
+    $('btn-register').textContent = 'Crear cuenta';
+    screen('login');
+  }
+});
+
+// LOGIN
+$('btn-login').onclick=async()=>{
+  const e=$('l-email').value.trim(), p=$('l-pass').value;
+  if(!e||!p){toast('Completá email y contraseña','warn');return;}
+  loader(true,'Ingresando...');
+  try{ await auth.signInWithEmailAndPassword(e,p); }
+  catch(e){ console.warn('Login error:', e); toast(e.code==='auth/invalid-credential'?'Email o contraseña incorrectos':'Error login: '+(e.message||e.code),'err'); }
+  finally{ loader(false); }
+};
+$('forgot-pass').onclick=async()=>{
+  const e=$('l-email').value.trim();
+  if(!e){ toast('Escribí tu email y tocá recuperar contraseña.', 'warn'); return; }
+  loader(true,'Enviando recuperación...');
+  try{
+    await auth.sendPasswordResetEmail(e);
+    toast('Te envié un email para cambiar la contraseña.', 'ok');
+  }catch(err){
+    console.warn('Reset password error:', err);
+    toast('No pude enviar recuperación: '+(err.message||err.code), 'err');
+  }finally{ loader(false); }
+};
+$('l-pass').onkeydown=ev=>{ if(ev.key==='Enter') $('btn-login').click(); };
+$('go-register').onclick=()=>{ PENDING_PROFILE_USER=null; $('r-email').disabled=false; $('r-pass').disabled=false; $('btn-register').textContent='Crear cuenta'; screen('register'); };
+$('go-login').onclick=()=>screen('login');
+
+// REGISTRO
+$('r-rol').onchange=async()=>{
+  const rol=$('r-rol').value;
+  const sel=$('r-supervisor');
+  if(rol!=='tecnico'){
+    $('r-sup-row').style.display='none';
+    sel.innerHTML='<option value="">— No aplica —</option>';
+    sel.value='';
+    return;
+  }
+  $('r-sup-row').style.display='block';
+  sel.innerHTML='<option value="">— Cargando supervisores... —</option>';
+  try{
+    const s=await db.collection('users').where('role','==','supervisor').get();
+    sel.innerHTML='<option value="">— Seleccioná supervisor —</option>';
+    let count=0;
+    s.forEach(d=>{ count++; sel.innerHTML+=`<option value="${d.id}">${d.data().name || d.data().email || 'Supervisor'}</option>`; });
+    if(!count) sel.innerHTML='<option value="">— Primero creá un supervisor —</option>';
+  }catch(e){
+    console.warn('Error cargando supervisores:', e);
+    sel.innerHTML='<option value="">— Error cargando supervisores —</option>';
+    toast('No pude cargar supervisores. Revisá reglas Firestore.', 'err');
+  }
+};
+$('btn-register').onclick=async()=>{
+  const nombre=$('r-nombre').value.trim(), email=$('r-email').value.trim();
+  const pass=$('r-pass').value, rol=$('r-rol').value, supId=$('r-supervisor').value;
+  if(!nombre||!email||!rol){toast('Completá nombre, email y rol','warn');return;}
+  if(!PENDING_PROFILE_USER && !pass){toast('Completá la contraseña','warn');return;}
+  if(rol==='tecnico'&&!supId){toast('Seleccioná tu supervisor','warn');return;}
+  if(!PENDING_PROFILE_USER && pass.length<6){toast('Contraseña: mínimo 6 caracteres','warn');return;}
+  loader(true, PENDING_PROFILE_USER ? 'Completando perfil...' : 'Creando cuenta...');
+  try{
+    let user = PENDING_PROFILE_USER;
+    if(!user){
+      const c=await auth.createUserWithEmailAndPassword(email,pass);
+      user=c.user;
+      await user.updateProfile({displayName:nombre});
+    }
+    const payload={
+      uid:user.uid,
+      name:nombre,
+      email:user.email || email,
+      role:rol,
+      supervisorId:rol==='tecnico'?supId:null,
+      updatedAt:TS()
+    };
+    // set con merge permite recuperar cuentas que existían en Auth pero no tenían perfil Firestore.
+    await db.collection('users').doc(user.uid).set({ ...payload, createdAt:TS() }, { merge:true });
+    const snap=await db.collection('users').doc(user.uid).get();
+    ME=user; PERFIL=snap.data(); PENDING_PROFILE_USER=null;
+    $('r-email').disabled=false; $('r-pass').disabled=false; $('btn-register').textContent='Crear cuenta';
+    toast('Perfil listo ✓','ok');
+    goApp();
+  }catch(e){
+    console.warn('Registro/perfil error:', e);
+    if(e.code==='auth/email-already-in-use') toast('Ese email ya existe. Probá iniciar sesión; si entra a completar perfil, elegí rol y guardá.', 'warn');
+    else toast('Error registro: '+(e.message||e.code),'err');
+  }finally{ loader(false); }
+};
+
+function goApp(){
+  const r=PERFIL.role;
+  if(r==='admin'){ renderAdmin(); screen('admin'); }
+  else if(r==='supervisor'){ renderSupervisor(); screen('supervisor'); }
+  else { renderTecnico(); screen('tecnico'); }
+}
+function logout(){ auth.signOut().then(()=>{ ME=null;PERFIL=null;PENDING_PROFILE_USER=null; screen('login'); }); }
+$('tec-logout').onclick=logout;
+$('sup-logout').onclick=logout;
+$('adm-logout').onclick=logout;
+
+// ─── UPLOAD ──────────────────────────────────
+function triggerUpload(){ $('file-input').click(); }
+$('tec-upload').onclick=triggerUpload;
+$('sup-upload').onclick=triggerUpload;
+
+$('file-input').onchange=async e=>{
+  let file=e.target.files[0]; e.target.value='';
+  if(!file) return;
+  loader(true,'Preparando factura...');
+  try{
+    if(file.type.startsWith('image/')){
+      file = await compressImageIfNeeded(file);
+    }
+    validateInvoiceFile(file);
+    pendingFile=file;
+    pendingB64=await b64(file);
+    pendingType=file.type==='application/pdf'?'pdf':'image';
+
+    // OCR seguro: el navegador llama a Firebase Function.
+    // La Function llama a Gemini con la API key protegida.
+    try{
+      loader(true,'Escaneando con Gemini...');
+      const idToken = await auth.currentUser.getIdToken();
+      const response = await fetch(SCAN_INVOICE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + idToken
+        },
+        body: JSON.stringify({
+          base64: pendingB64,
+          mimeType: file.type,
+          fileName: file.name || 'factura'
+        })
+      });
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error('Gemini HTTP ' + response.status + ': ' + errText);
+      }
+      const r = await response.json();
+      console.log('Gemini respuesta v14:', r);
+      $('pm-proveedor').value=r.proveedor||'';
+      $('pm-fecha').value=r.fecha_factura||'';
+      $('pm-numero').value=r.numero_factura||'';
+      $('pm-monto').value=(r.monto || r.monto===0) ? Number(r.monto).toFixed(2) : '';
+      $('modal-scan-msg').textContent='✅ Datos detectados con Gemini. Revisá y confirmá.';
+    }catch(err){
+      console.warn('Gemini falló:', err);
+      toast('Gemini no pudo leer esta factura. Completá manual y guardá igual.', 'warn');
+      $('pm-proveedor').value=''; $('pm-fecha').value=''; $('pm-numero').value=''; $('pm-monto').value='';
+      $('modal-scan-msg').textContent='No se pudo leer automáticamente. Completá los datos manualmente.';
+    }
+
+    const sel=$('pm-metodo'); sel.innerHTML='';
+    const opts=PERFIL.role==='tecnico'?['QR','Tarjeta recargable (personal)']:['Tarjeta Business Crédito','Tarjeta Recargable','QR'];
+    opts.forEach(o=>sel.innerHTML+=`<option value="${o}">${o}</option>`);
+    $('pm-qr-row').style.display='none';
+    $('invoice-modal').classList.add('open');
+  }catch(err){
+    toast(err.message || 'Error al leer el archivo','err');
+    pendingFile=null; pendingB64=null; pendingType=null;
+  }
+  finally{ loader(false); }
+};
+
+const PROMPT='';
+function onMetodoChange(){
+  $('pm-qr-row').style.display=$('pm-metodo').value==='QR'?'block':'none';
+}
+function resetPendingInvoice(){
+  pendingFile=null; pendingB64=null; pendingType=null;
+}
+function closeModal(){
+  $('invoice-modal').classList.remove('open');
+  resetPendingInvoice();
+}
+function hideModalKeepPending(){
+  $('invoice-modal').classList.remove('open');
+}
+
+async function guardarFactura(){
+  const proveedor=$('pm-proveedor').value.trim()||'Sin especificar';
+  const fecha=$('pm-fecha').value.trim();
+  const numero=$('pm-numero').value.trim();
+  const monto=parseMontoInput($('pm-monto').value)||0;
+  const metodo=$('pm-metodo').value;
+  const qrQuien=$('pm-qr-quien').value.trim();
+  if(!fecha||!monto){ toast('Fecha y monto son obligatorios','warn'); return; }
+  const metodoFinal=metodo==='QR'&&qrQuien?`QR (${qrQuien})`:metodo;
+  loader(true,'Guardando factura e imagen...'); hideModalKeepPending();
+  try{
+    const uid=ME.uid, now=new Date();
+    const id=Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+    let imageUrl=null;
+    if(pendingFile){
+      const ref=stor.ref(`facturas/${uid}/${nowKey()}/${id}`);
+      const snap=await ref.put(pendingFile, {contentType: pendingFile.type || 'image/jpeg'});
+      imageUrl=await snap.ref.getDownloadURL();
+    }
+    await db.collection('invoices').doc(id).set({
+      id,uid,userName:PERFIL.name,role:PERFIL.role,
+      supervisorId:PERFIL.supervisorId||null,
+      proveedor,fecha_factura:fecha,numero_factura:numero,
+      monto,metodo_pago:metodoFinal,monthKey:nowKey(),
+      imageUrl:imageUrl||null,
+      imageName: pendingFile ? (pendingFile.name || '') : '',
+      imageType: pendingFile ? (pendingFile.type || '') : '',
+      uploadedAt:now.toLocaleDateString('es-AR')+' '+now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}),
+      createdAt:TS()
+    });
+    toast('Factura guardada ✓','ok');
+    if(PERFIL.role==='supervisor') renderSupervisor(); else renderTecnico();
+  }catch(err){ toast('Error al guardar: '+err.message,'err'); }
+  finally{ loader(false); pendingFile=null; pendingB64=null; pendingType=null; }
+}
+
+// ─── CARD HTML ───────────────────────────────
+function cardHTML(inv, canDel=false){
+  const isPdf = ((inv.imageType || inv.fileType || '').includes('pdf')) || /\.pdf(\?|$)/i.test((inv.imageName || inv.imageUrl || ''));
+  const imgHTML = inv.imageUrl
+    ? (isPdf
+      ? `<div class="inv-img-placeholder" style="font-size:13px;font-weight:700">PDF</div>`
+      : `<img src="${inv.imageUrl}" alt="factura" loading="lazy" style="width:100%;height:100%;object-fit:cover">`)
+    : `<span class="inv-img-placeholder">🧾</span>`;
+  const clickAction = isPdf ? `window.open('${inv.imageUrl||''}','_blank')` : `openImg('${inv.imageUrl||''}')`;
+  return `<div class="inv-card">
+    <div class="inv-card-top">
+      <div class="inv-img" onclick="${clickAction}">${imgHTML}</div>
+      <div class="inv-info">
+        <div class="inv-proveedor">${inv.proveedor||'Sin proveedor'}</div>
+        <div class="inv-row">
+          <span class="inv-monto">${fmtMonto(inv.monto)}</span>
+          <span class="inv-tag">${inv.metodo_pago||'—'}</span>
+        </div>
+        <div class="inv-detail">📅 ${inv.fecha_factura||'—'} · N° ${inv.numero_factura||'—'}</div>
+      </div>
+    </div>
+    <div class="inv-footer">
+      <span class="inv-meta-small">Subido: ${inv.uploadedAt||''}</span>
+      ${canDel?`<button class="del-btn" onclick="eliminar('${inv.id}','${inv.imageUrl||''}')">🗑 Eliminar</button>`:''}
+    </div>
+  </div>`;
+}
+
+async function eliminar(id, url){
+  if(!confirm('¿Eliminar esta factura?')) return;
+  loader(true,'Eliminando...');
+  try{
+    await db.collection('invoices').doc(id).delete();
+    if(url){ try{ await stor.refFromURL(url).delete(); }catch{} }
+    toast('Eliminada','ok');
+    if(PERFIL.role==='supervisor') renderSupervisor(); else renderTecnico();
+  }catch{ toast('Error al eliminar','err'); }finally{ loader(false); }
+}
+
+// ─── RENDER TÉCNICO ──────────────────────────
+async function renderTecnico(){
+  if(!ME) return;
+  loader(true,'Cargando...');
+  try{
+    const mk=mkey(tecAnio,tecMes);
+    $('tec-nombre').textContent=PERFIL.name;
+    $('tec-mes').textContent='Técnico';
+    $('tec-month-label').textContent=MESES[tecMes]+' '+tecAnio;
+    const snaps=await db.collection('invoices').where('uid','==',ME.uid).where('monthKey','==',mk).get();
+    const invs=[]; snaps.forEach(s=>invs.push(s.data()));
+    invs.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    const total=invs.reduce((s,i)=>s+(i.monto||0),0);
+    $('tec-count').textContent=invs.length;
+    $('tec-total').textContent=fmtMonto(total);
+    $('tec-list').innerHTML=invs.length?invs.map(i=>cardHTML(i,true)).join(''):`<div class="empty-state"><div class="icon">🧾</div><p>Sin facturas este mes</p></div>`;
+  }finally{ loader(false); }
+}
+$('tec-prev').onclick=()=>{ tecMes--; if(tecMes<0){tecMes=11;tecAnio--;} renderTecnico(); };
+$('tec-next').onclick=()=>{ tecMes++; if(tecMes>11){tecMes=0;tecAnio++;} renderTecnico(); };
+
+// ─── RENDER SUPERVISOR ───────────────────────
+async function renderSupervisor(){
+  if(!ME) return;
+  loader(true,'Cargando...');
+  try{
+    const mk=mkey(supAnio,supMes);
+    $('sup-nombre').textContent=PERFIL.name;
+    $('sup-month-label').textContent=MESES[supMes]+' '+supAnio;
+    const [snapPropias, snapEquipo]=await Promise.all([
+      db.collection('invoices').where('uid','==',ME.uid).where('monthKey','==',mk).get(),
+      db.collection('invoices').where('supervisorId','==',ME.uid).where('monthKey','==',mk).get()
+    ]);
+    const propias=[]; snapPropias.forEach(s=>propias.push(s.data()));
+    propias.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    const tecMap={};
+    snapEquipo.forEach(s=>{ const d=s.data(); if(!tecMap[d.uid]) tecMap[d.uid]={name:d.userName,invs:[]}; tecMap[d.uid].invs.push(d); });
+    Object.values(tecMap).forEach(v=>v.invs.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)));
+    let html='';
+    // Mis facturas
+    html+=`<div class="sec-title">Mis facturas (${propias.length})</div>`;
+    html+=propias.length?propias.map(i=>cardHTML(i,true)).join(''):`<div class="empty-state" style="padding:20px"><div class="icon">🧾</div><p>Sin facturas propias</p></div>`;
+    // Equipo
+    html+=`<div class="sec-title" style="margin-top:16px">Mi equipo</div>`;
+    if(!Object.keys(tecMap).length){
+      html+=`<div class="empty-state" style="padding:20px"><div class="icon">👥</div><p>Sin facturas del equipo</p></div>`;
+    } else {
+      Object.values(tecMap).forEach(v=>{
+        const tot=v.invs.reduce((s,i)=>s+(i.monto||0),0);
+        html+=`<div class="team-section"><div class="team-header"><span class="team-name">👤 ${v.name}</span><span class="team-total">${fmtMonto(tot)}</span></div><div class="team-body">${v.invs.map(i=>cardHTML(i,false)).join('')}</div></div>`;
+      });
+    }
+    $('sup-content').innerHTML=html;
+  }finally{ loader(false); }
+}
+$('sup-prev').onclick=()=>{ supMes--; if(supMes<0){supMes=11;supAnio--;} renderSupervisor(); };
+$('sup-next').onclick=()=>{ supMes++; if(supMes>11){supMes=0;supAnio++;} renderSupervisor(); };
+
+// ─── RENDER ADMIN ─────────────────────────────
+async function renderAdmin(){
+  if(!ME) return;
+  loader(true,'Cargando...');
+  try{
+    const mk=mkey(admAnio,admMes);
+    $('adm-month-sub').textContent=MESES[admMes]+' '+admAnio;
+    $('adm-month-label').textContent=MESES[admMes]+' '+admAnio;
+    const snaps=await db.collection('invoices').where('monthKey','==',mk).get();
+    const all=[]; snaps.forEach(s=>all.push(s.data()));
+    all.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    const total=all.reduce((s,i)=>s+(i.monto||0),0);
+    $('adm-total').textContent=fmtMonto(total);
+    $('adm-count').textContent=all.length;
+    const byUser={};
+    all.forEach(i=>{ if(!byUser[i.uid]) byUser[i.uid]={name:i.userName,role:i.role,invs:[]}; byUser[i.uid].invs.push(i); });
+    const cont=$('adm-list');
+    if(!Object.keys(byUser).length){ cont.innerHTML=`<div class="empty-state"><div class="icon">📋</div><p>Sin facturas este mes</p></div>`; return; }
+    cont.innerHTML=Object.entries(byUser).map(([uid,v])=>{
+      const tot=v.invs.reduce((s,i)=>s+(i.monto||0),0);
+      const badge=v.role==='supervisor'?'<span class="role-badge sup">Supervisor</span>':'<span class="role-badge tec">Técnico</span>';
+      return `<div class="adm-user">
+        <div class="adm-user-header" onclick="toggleAdm('${uid}')">
+          <div><span class="adm-user-name">${v.name}</span>${badge}</div>
+          <span class="adm-user-total">${fmtMonto(tot)}</span>
+        </div>
+        <div class="adm-user-body" id="adm-body-${uid}" style="display:none">
+          ${v.invs.map(i=>cardHTML(i,false)).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  }finally{ loader(false); }
+}
+function toggleAdm(uid){
+  const el=$('adm-body-'+uid);
+  el.style.display=el.style.display==='none'?'block':'none';
+}
+$('adm-prev').onclick=()=>{ admMes--; if(admMes<0){admMes=11;admAnio--;} renderAdmin(); };
+$('adm-next').onclick=()=>{ admMes++; if(admMes>11){admMes=0;admAnio++;} renderAdmin(); };
+
+// ─── EXPORT EXCEL ─────────────────────────────
+function invoiceRows(invs){
+  return invs.map(i=>({
+    Usuario: i.userName || '',
+    Rol: i.role || '',
+    Proveedor: i.proveedor || '',
+    Fecha: i.fecha_factura || '',
+    Factura: i.numero_factura || '',
+    Monto: Number(i.monto || 0),
+    Metodo: i.metodo_pago || '',
+    Mes: i.monthKey || '',
+    Factura_Imagen: i.imageUrl ? 'Abrir factura' : '',
+    Link_Imagen: i.imageUrl || '',
+    Subido: i.uploadedAt || ''
+  }));
+}
+function addImageLinks(ws, invs){
+  if(!ws['!ref']) return;
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  let facturaImgCol = -1;
+  let linkCol = -1;
+  for(let c=range.s.c; c<=range.e.c; c++){
+    const cell = ws[XLSX.utils.encode_cell({r:0,c})];
+    if(cell && cell.v === 'Factura_Imagen') facturaImgCol = c;
+    if(cell && cell.v === 'Link_Imagen') linkCol = c;
+  }
+  invs.forEach((i, idx)=>{
+    const r = idx + 1;
+    if(i.imageUrl && facturaImgCol >= 0){
+      const addr = XLSX.utils.encode_cell({r,c:facturaImgCol});
+      ws[addr] = {t:'s', v:'Abrir factura', l:{Target:i.imageUrl, Tooltip:'Abrir imagen de factura'}};
+    }
+    if(i.imageUrl && linkCol >= 0){
+      const addr2 = XLSX.utils.encode_cell({r,c:linkCol});
+      if(ws[addr2]) ws[addr2].l = {Target:i.imageUrl, Tooltip:'Abrir imagen de factura'};
+    }
+  });
+  ws['!cols'] = [
+    {wch:20},{wch:12},{wch:24},{wch:12},{wch:20},{wch:14},{wch:22},{wch:10},{wch:16},{wch:45},{wch:18}
+  ];
+}
+async function exportarMes(scope){
+  if(!ME) return;
+  loader(true,'Generando Excel...');
+  try{
+    const mes = scope==='admin'?admMes:supMes;
+    const anio = scope==='admin'?admAnio:supAnio;
+    const mk = mkey(anio, mes);
+    let query = db.collection('invoices').where('monthKey','==',mk);
+    let snaps;
+    if(scope==='admin'){
+      snaps = await query.get();
+    }else{
+      const [propias, equipo] = await Promise.all([
+        db.collection('invoices').where('uid','==',ME.uid).where('monthKey','==',mk).get(),
+        db.collection('invoices').where('supervisorId','==',ME.uid).where('monthKey','==',mk).get()
+      ]);
+      const docs = [];
+      propias.forEach(d=>docs.push(d));
+      equipo.forEach(d=>docs.push(d));
+      snaps = {forEach: cb => docs.forEach(cb)};
+    }
+    const invs=[]; snaps.forEach(s=>invs.push(s.data()));
+    invs.sort((a,b)=>(a.userName||'').localeCompare(b.userName||'') || (a.fecha_factura||'').localeCompare(b.fecha_factura||''));
+    if(!invs.length){ toast('No hay datos para exportar','warn'); return; }
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(invoiceRows(invs));
+    addImageLinks(ws, invs);
+    XLSX.utils.book_append_sheet(wb, ws, 'Gastos');
+
+    const resumenMap = {};
+    invs.forEach(i=>{
+      const k = i.userName || 'Sin usuario';
+      if(!resumenMap[k]) resumenMap[k] = {Usuario:k, Facturas:0, Total:0};
+      resumenMap[k].Facturas += 1;
+      resumenMap[k].Total += Number(i.monto || 0);
+    });
+    const resumen = Object.values(resumenMap);
+    const ws2 = XLSX.utils.json_to_sheet(resumen);
+    XLSX.utils.book_append_sheet(wb, ws2, 'Resumen');
+
+    XLSX.writeFile(wb, `GastApp_${mk}_${scope}.xlsx`);
+    toast('Excel generado','ok');
+  }catch(err){
+    console.error(err);
+    toast('Error al exportar Excel','err');
+  }finally{
+    loader(false);
+  }
+}
+if($('sup-export')) $('sup-export').onclick=()=>exportarMes('supervisor');
+if($('adm-export')) $('adm-export').onclick=()=>exportarMes('admin');
+
+</script>
+</body>
+</html>
