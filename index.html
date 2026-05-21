@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="GastApp">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="icon.png">
 <title>GastApp</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -306,9 +306,10 @@ input[type=file]{display:none}
 
 <script>
 // ─── SPA HISTORY GUARD ─────────────────────────
-// Evita que el botón Atrás saque/crashee la SPA al estar publicada en GitHub Pages.
-window.addEventListener('popstate', e => { e.preventDefault(); history.pushState(null, '', location.href); });
 history.pushState(null, '', location.href);
+window.addEventListener('popstate', () => {
+  history.pushState(null, '', location.href);
+});
 
 // ─── PWA SERVICE WORKER ────────────────────────
 if ('serviceWorker' in navigator) {
