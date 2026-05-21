@@ -319,11 +319,18 @@ window.addEventListener('popstate', () => {
   history.pushState(null, '', location.href);
 });
 
-// ─── PWA SERVICE WORKER ────────────────────────
+// ─── VERSION / CACHE FIX ────────────────────────
+console.log('GastApp v23 loaded - cache fixed');
+// Desactiva service workers viejos que pueden dejar la app congelada con JS anterior.
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW no registrado:', err));
-  });
+  navigator.serviceWorker.getRegistrations()
+    .then(regs => regs.forEach(reg => reg.unregister()))
+    .catch(err => console.warn('No se pudo desregistrar SW:', err));
+}
+if (window.caches) {
+  caches.keys()
+    .then(keys => keys.forEach(k => caches.delete(k)))
+    .catch(err => console.warn('No se pudo limpiar cache:', err));
 }
 
 // ─── CONFIG ───────────────────────────────────
