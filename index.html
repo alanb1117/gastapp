@@ -4,7 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#1a56db">
+<meta name="theme-color" content="#f97316">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="GastApp">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
 <title>GastApp</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -300,6 +305,18 @@ input[type=file]{display:none}
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
+// ─── SPA HISTORY GUARD ─────────────────────────
+// Evita que el botón Atrás saque/crashee la SPA al estar publicada en GitHub Pages.
+window.addEventListener('popstate', e => { e.preventDefault(); history.pushState(null, '', location.href); });
+history.pushState(null, '', location.href);
+
+// ─── PWA SERVICE WORKER ────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW no registrado:', err));
+  });
+}
+
 // ─── CONFIG ───────────────────────────────────
 firebase.initializeApp({
   apiKey:"AIzaSyC9i_qetQEt3rUQS63ypPDPsdetP2MBDdY",
