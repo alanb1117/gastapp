@@ -667,7 +667,7 @@ async function guardarFactura(){
       imageUrl:imageUrl||null,
       imageName: pendingFile ? (pendingFile.name || '') : '',
       imageType: pendingFile ? (pendingFile.type || '') : '',
-      status:'pendiente',
+      status: PERFIL.role === 'tecnico' ? 'pendiente' : 'aprobada',
       motivoRechazo:null,
       aprobadoPor:null,
       aprobadoAt:null,
