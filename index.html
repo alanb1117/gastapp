@@ -831,7 +831,7 @@ async function renderAdmin(){
       .where('status','==','aprobada')
       .orderBy('createdAt','desc')
       .get();
-    const all=[] snaps.forEach(s=>all.push(s.data()));
+    const all=[]; snaps.forEach(s=>all.push(s.data()));
     all.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
     const total=all.reduce((s,i)=>s+(i.monto||0),0);
     $('adm-total').textContent=fmtMonto(total);
