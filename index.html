@@ -310,6 +310,7 @@ input[type=file]{display:none}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
@@ -320,18 +321,7 @@ window.addEventListener('popstate', () => {
 });
 
 // ─── VERSION / CACHE FIX ────────────────────────
-console.log('GastApp v23 loaded - cache fixed');
-// Desactiva service workers viejos que pueden dejar la app congelada con JS anterior.
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations()
-    .then(regs => regs.forEach(reg => reg.unregister()))
-    .catch(err => console.warn('No se pudo desregistrar SW:', err));
-}
-if (window.caches) {
-  caches.keys()
-    .then(keys => keys.forEach(k => caches.delete(k)))
-    .catch(err => console.warn('No se pudo limpiar cache:', err));
-}
+console.log('GastApp Fase 3 Notificaciones loaded');
 
 // ─── CONFIG ───────────────────────────────────
 firebase.initializeApp({
@@ -345,6 +335,8 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 const stor = firebase.storage();
+const FCM_VAPID_PUBLIC_KEY = "BAANcY6Sn13OThkCtbVcUa68_JILJhY5vf-oyRpSadIg1SrkHeNy1A_ZITNBn6qnJIp2d-0rquEE80G7HI3I7yg"; // Firebase Console → Project settings → Cloud Messaging → Web Push certificates
+let messaging = null;
 const SCAN_INVOICE_URL = 'https://us-central1-gastapp-empresa.cloudfunctions.net/scanInvoiceOCRV14';
 const TS = firebase.firestore.FieldValue.serverTimestamp;
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -431,6 +423,56 @@ function validateInvoiceFile(file){
 // ─── IMAGE VIEWER ───────────────────────────
 function openImg(url){ if(!url) return; $('img-viewer-src').src=url; $('img-viewer').classList.add('open'); }
 function closeImg(){ $('img-viewer').classList.remove('open'); }
+
+
+// ─── PUSH NOTIFICATIONS ─────────────────────
+async function initPushNotifications(){
+  try{
+    if(!ME || !PERFIL) return;
+    if(!('Notification' in window) || !('serviceWorker' in navigator)){
+      console.warn('Push no soportado en este navegador');
+      return;
+    }
+    if(FCM_VAPID_PUBLIC_KEY.includes('PEGAR_AQUI')){
+      console.warn('Falta configurar FCM_VAPID_PUBLIC_KEY en index.html');
+      return;
+    }
+    const supported = await firebase.messaging.isSupported();
+    if(!supported){
+      console.warn('Firebase Messaging no soportado en este navegador');
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    if(permission !== 'granted'){
+      console.warn('Permiso de notificaciones no otorgado:', permission);
+      return;
+    }
+    const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+    messaging = firebase.messaging();
+    const token = await messaging.getToken({
+      vapidKey: FCM_VAPID_PUBLIC_KEY,
+      serviceWorkerRegistration: registration
+    });
+    if(!token){
+      console.warn('FCM no devolvió token');
+      return;
+    }
+    await db.collection('users').doc(ME.uid).set({
+      fcmTokens: firebase.firestore.FieldValue.arrayUnion(token),
+      fcmUpdatedAt: TS(),
+      fcmUserAgent: navigator.userAgent
+    }, { merge:true });
+    console.log('FCM token registrado');
+    messaging.onMessage(payload=>{
+      console.log('Push foreground:', payload);
+      const title = payload?.notification?.title || 'GastApp';
+      const body = payload?.notification?.body || 'Nueva notificación';
+      toast(`${title}: ${body}`, 'ok');
+    });
+  }catch(e){
+    console.warn('No se pudo iniciar push notifications:', e);
+  }
+}
 
 // ─── AUTH ────────────────────────────────────
 auth.onAuthStateChanged(async user=>{
@@ -554,6 +596,7 @@ function goApp(){
   if(r==='admin'){ renderAdmin(); screen('admin'); }
   else if(r==='supervisor'){ renderSupervisor(); screen('supervisor'); }
   else { renderTecnico(); screen('tecnico'); }
+  initPushNotifications();
 }
 function logout(){ auth.signOut().then(()=>{ ME=null;PERFIL=null;PENDING_PROFILE_USER=null; screen('login'); }); }
 $('tec-logout').onclick=logout;
@@ -667,7 +710,7 @@ async function guardarFactura(){
       imageUrl:imageUrl||null,
       imageName: pendingFile ? (pendingFile.name || '') : '',
       imageType: pendingFile ? (pendingFile.type || '') : '',
-      status: PERFIL.role === 'tecnico' ? 'pendiente' : 'aprobada',
+      status:'pendiente',
       motivoRechazo:null,
       aprobadoPor:null,
       aprobadoAt:null,
